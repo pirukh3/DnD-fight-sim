@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from combat_sim.dice import roll_d20, roll_notation
+from combat_sim.dice import parse_dice_notation, roll_d20, roll_dice
 
 
 @dataclass
@@ -132,7 +132,8 @@ class Combatant:
     def roll_damage(self, attack: Attack, critical: bool = False) -> int:
         """Roll damage for an attack.
 
-        On a critical hit, damage dice are rolled twice.
+        On a critical hit, damage dice are rolled twice but the
+        modifier is only applied once (per DnD 5e rules).
 
         Args:
             attack: The attack being made.
@@ -141,9 +142,10 @@ class Combatant:
         Returns:
             Total damage rolled.
         """
-        damage = roll_notation(attack.damage_dice)
+        num_dice, sides, modifier = parse_dice_notation(attack.damage_dice)
+        damage = sum(roll_dice(num_dice, sides)) + modifier
         if critical:
-            damage += roll_notation(attack.damage_dice)
+            damage += sum(roll_dice(num_dice, sides))
         return max(damage, 0)
 
 
